@@ -4,6 +4,7 @@
 import requests
 import os
 import ffmpy
+import pymysql
 from datetime import datetime
 
 
@@ -61,3 +62,28 @@ class interface:
             print(e)
         # 剪辑后的文件可以进行返回
         return outpath
+
+    def select_user(self, username):
+        '''
+        查询用户数据信息
+        '''
+        # 打开数据库连接
+        db = pymysql.connect(host='localhost',
+                             user='root',
+                             password='root',
+                             database='mianshi')
+        # 使用 cursor() 方法创建一个游标对象 cursor
+        cursor = db.cursor()
+
+        try:
+            # 使用 execute() 方法执行sql查询
+            cursor.execute('select * from user where username =' + username)
+            # 使用 fetchone() 方法获取单条数据.
+            results = cursor.fetchall()
+            for row in results:
+                level = row[3]
+            return level
+        except:
+            print("Error: unable to fetch data")
+        # 关闭数据库连接
+        db.close()
