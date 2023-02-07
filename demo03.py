@@ -5,6 +5,8 @@ import requests
 import os
 import ffmpy
 import pymysql
+import re
+import subprocess
 from datetime import datetime
 
 
@@ -87,3 +89,49 @@ class interface:
             print("Error: unable to fetch data")
         # 关闭数据库连接
         db.close()
+
+    def get_seconds(time):
+        '''
+        将日志输出的时间类型转换成秒
+        '''
+        h = int(time[0:2])
+        # print("时：" + str(h))
+        m = int(time[3:5])
+        # print("分：" + str(m))
+        s = int(time[6:8])
+        # print("秒：" + str(s))
+        ms = int(time[9:12])
+        # print("毫秒：" + str(ms))
+        ts = (h * 60 * 60) + (m * 60) + s + (ms / 1000)
+        return ts
+
+    def ffmpeg_ui(self):
+        '''
+        获取ffmpeg的任务进度
+        '''
+
+        cmd = ['ffmpeg.exe', '-i', './video/temp.mp4', '-ar', '48000', '-ac',
+               '1', '-acodec', 'pcm_s16le', '-hide_banner', './video/out.mp4']
+        process = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8",
+                                   text=True)
+        for line in process.stdout:
+            # print(line)
+            duration_res = re.search(r'\sDuration: (?P<duration>\S+)', line)
+            if duration_res is not None:
+                duration = duration_res.groupdict()['duration']
+                duration = re.sub(r',', '', duration)
+
+            result = re.search(r'\stime=(?P<time>\S+)', line)
+            if result is not None:
+                elapsed_time = result.groupdict()['time']
+                progress = (self.get_seconds(elapsed_time) /
+                            self.get_seconds(duration)) * 100
+                print(elapsed_time)
+                print(progress)
+                print("进度:%3.2f" % progress + "%")
+
+        process.wait()
+        if process.poll() == 0:
+            print("success:", process)
+        else:
+            print("error:", process)
