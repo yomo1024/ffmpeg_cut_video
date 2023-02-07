@@ -62,6 +62,33 @@ class interface:
             ff.run()
         except Exception as e:
             print(e)
+
+        # 打开数据库连接
+        db = pymysql.connect(host='localhost',
+                             user='root',
+                             password='root',
+                             database='mianshi')
+        # 使用 cursor() 方法创建一个游标对象 cursor
+        cursor = db.cursor()
+
+        table_name = 'table_name '
+        sql = "INSERT INTO %s (fileName, start, end) VALUES (%s,%s,%s)" % (
+            table_name, filename, start, end)
+
+        try:
+            # 执行sql语句
+            cursor.execute(sql)
+            # 提交到数据库执行
+            db.commit()
+        except:
+            # 如果发生错误则回滚
+            db.rollback()
+
+        # 关闭不使用的游标对象
+        cursor.close()
+        # 关闭数据库连接
+        db.close()
+
         # 剪辑后的文件可以进行返回
         return outpath
 
@@ -87,6 +114,9 @@ class interface:
             return level
         except:
             print("Error: unable to fetch data")
+
+        # 关闭不使用的游标对象
+        cursor.close()
         # 关闭数据库连接
         db.close()
 
